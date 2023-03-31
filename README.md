@@ -3,15 +3,21 @@ A document management system aimed at being integrated into other systems.
 
 ## Proposed API
 
-### Personal area
-`/v1/docs/<name>`
-`/v1/docs/<name>/<document_id>`
+### Site
+A site can contain multiple different kinds of documents. A user can own several sites. All sites can have different levels of access.
 
-### Collections
-`/v1/docs/<name>/collections/<collection_id>`
-`/v1/docs/<name>/collections/<collection_id>/<document_id>`
+*Create a new site*
+POST `/v1/site/<name>`
 
-### Anonymized area
-`/v1/docs/<document_id>`
+*Retrieve information about site, ID, site owner, information about content etc*
+GET `/v1/site/<name>`
+
+
+
+*Retrieve information about a specific document*
+GET `/v1/site/<name>/<document_id>`
+
+*Access management*
+`/v1/site/<name>/access`
 
 ## Background tasks
