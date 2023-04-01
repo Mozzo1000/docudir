@@ -1,0 +1,10 @@
+flask==2.2.3
+psycopg2==2.9.5
+flask-marshmallow==0.14.0
+flask-sqlalchemy==3.0.3
+marshmallow-sqlalchemy==0.29.0
+python-dotenv==1.0.0
+flask_jwt_extended==4.4.4
+flasgger==0.9.5
+Flask-Migrate==4.0.4
+Flask-Cors==3.0.10
