@@ -2,9 +2,15 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow, fields
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.dialects.postgresql import UUID
 
 db = SQLAlchemy()
 ma = Marshmallow()
+
+user_sites = db.Table("user_sites", 
+                        db.Column("user_id", db.Integer, db.ForeignKey("users.id")),
+                        db.Column("site_id", UUID(as_uuid=True), db.ForeignKey("sites.id")),
+                        db.Column("permission", db.String, default="owner"))
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -35,6 +41,13 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = User
         fields = ("id", "name", "email", "role", "status")
+
+class Site(db.Model):
+    __tablename__ = "sites"
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = db.Column(db.String, nullable=False)
+    members = db.relationship("User", secondary="user_sites", backref="sites")
+
 
 class RevokedTokenModel(db.Model):
     __tablename__ = 'revoked_tokens'
