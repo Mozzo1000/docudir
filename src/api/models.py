@@ -3,6 +3,7 @@ from flask_marshmallow import Marshmallow, fields
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.dialects.postgresql import UUID
+import shortuuid
 
 db = SQLAlchemy()
 ma = Marshmallow()
@@ -11,6 +12,23 @@ user_sites = db.Table("user_sites",
                         db.Column("user_id", db.Integer, db.ForeignKey("users.id")),
                         db.Column("site_id", UUID(as_uuid=True), db.ForeignKey("sites.id")),
                         db.Column("permission", db.String, default="owner"))
+
+class Folder(db.Model):
+    __tablename__ = "folders"
+    id = db.Column(db.String, primary_key=True, default=shortuuid.uuid)
+    name = db.Column(db.String, nullable=False)
+    parent_id = db.Column(db.String, db.ForeignKey("folders.id"))
+    children = db.relationship("Folder", backref=db.backref("parent", remote_side=[id]))
+
+class FolderSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Folder
+
+class FoldersWithFoldersSchema(ma.SQLAlchemyAutoSchema):
+    children = ma.Nested('FoldersWithFoldersSchema', many=True)
+    class Meta:
+        model = Folder
+        include_fk = True
 
 class User(db.Model):
     __tablename__ = 'users'
