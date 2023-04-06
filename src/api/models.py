@@ -19,13 +19,10 @@ class Folder(db.Model):
     name = db.Column(db.String, nullable=False)
     parent_id = db.Column(db.String, db.ForeignKey("folders.id"))
     children = db.relationship("Folder", backref=db.backref("parent", remote_side=[id]))
+    site_id = db.Column(UUID(as_uuid=True), db.ForeignKey("sites.id"), nullable=False)
 
 class FolderSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = Folder
-
-class FoldersWithFoldersSchema(ma.SQLAlchemyAutoSchema):
-    children = ma.Nested('FoldersWithFoldersSchema', many=True)
+    children = ma.Nested('FolderSchema', many=True)
     class Meta:
         model = Folder
         include_fk = True
@@ -65,7 +62,23 @@ class Site(db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = db.Column(db.String, nullable=False)
     members = db.relationship("User", secondary="user_sites", backref="sites")
+    folders = db.relationship("Folder")
 
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+class SiteSchema(ma.SQLAlchemySchema):
+    id = ma.auto_field()
+    name = ma.auto_field()
+    folder_count = ma.Method("calculate_folder_count")
+    
+
+    def calculate_folder_count(self, obj):
+        if obj:
+            return len(obj.folders)
+    class Meta:
+        model = Site
 
 class RevokedTokenModel(db.Model):
     __tablename__ = 'revoked_tokens'
