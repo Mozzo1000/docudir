@@ -6,6 +6,7 @@ from api.models import db, ma
 from api.config import DevConfig, ProdConfig
 import os
 from api.routes.auth import auth_endpoint
+from api.routes.site import site_endpoint
 
 app = Flask(__name__)
 CORS(app)
@@ -19,6 +20,7 @@ migrate = Migrate(app, db)
 jwt = JWTManager(app)
 
 app.register_blueprint(auth_endpoint)
+app.register_blueprint(site_endpoint)
 
 @app.route("/")
 def index():
