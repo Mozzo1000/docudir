@@ -27,4 +27,9 @@ GET `/v1/site/<name>/documents/<document_id.ext>`
 
 `/v1/site/<name>/access`
 
+**File/folder ID examples**
+UUID : `a1ed302a-ff5d-48bb-8cde-15ff9d57c270`
+SmallUUID : `7yFBkLpFxQesn7jbg92vRM`
+
+
 ## Background tasks
