@@ -89,6 +89,7 @@ class Site(db.Model):
     name = db.Column(db.String, nullable=False)
     members = db.relationship("User", secondary="user_sites", backref="sites")
     folders = db.relationship("Folder")
+    files = db.relationship("File")
 
     def save_to_db(self):
         db.session.add(self)
@@ -98,11 +99,15 @@ class SiteSchema(ma.SQLAlchemySchema):
     id = ma.auto_field()
     name = ma.auto_field()
     folder_count = ma.Method("calculate_folder_count")
+    file_count = ma.Method("calculate_file_count")
     
 
     def calculate_folder_count(self, obj):
         if obj:
             return len(obj.folders)
+    def calculate_file_count(self, obj):
+        if obj:
+            return len(obj.files)
     class Meta:
         model = Site
 
