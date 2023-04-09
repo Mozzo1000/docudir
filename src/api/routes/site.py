@@ -100,13 +100,14 @@ def get_file(site_id, file_id, folder_id=None, ext=None):
         }), 401
 
 @site_endpoint.route("/v1/sites/<site_id>/files")
+@site_endpoint.route("/v1/sites/<site_id>/folders/<folder_id>/files")
 @jwt_required()
-def get_files_in_site(site_id):
+def get_files_(site_id, folder_id=None):
     file_schema = FileSchema(many=True)
     current_user = User.find_by_email(get_jwt_identity())
     allowed_site = Site.query.filter(Site.id==site_id, Site.members.any(id=current_user.id)).first() is not None
     if allowed_site:
-        files = File.query.filter(File.site_id==site_id, File.folder_id==None).all()
+        files = File.query.filter(File.site_id==site_id, File.folder_id==folder_id).all()
         if files:
             return jsonify(file_schema.dump(files))
         else:
