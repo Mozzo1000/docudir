@@ -5,6 +5,7 @@ class Config:
     SECRET_KEY = 'this-really-needs-to-be-changed'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "postgresql://admin:password@localhost/docudir")
+    DATA_FOLDER = os.environ.get("DATA_FOLDER", "data")
 
 class ProdConfig(Config):
     FLASK_ENV = "production"
