@@ -38,9 +38,17 @@ class Folder(db.Model):
     parent_id = db.Column(db.String, db.ForeignKey("folders.id"))
     children = db.relationship("Folder", backref=db.backref("parent", remote_side=[id]))
     site_id = db.Column(UUID(as_uuid=True), db.ForeignKey("sites.id"), nullable=False)
+    files = db.relationship("File")
+    
 
 class FolderSchema(ma.SQLAlchemyAutoSchema):
     children = ma.Nested('FolderSchema', many=True)
+    file_count = ma.Method("calculate_file_count")
+    
+    def calculate_file_count(self, obj):
+        if obj:
+            return len(obj.files)
+    
     class Meta:
         model = Folder
         include_fk = True
