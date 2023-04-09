@@ -22,6 +22,20 @@ def get_site(id):
             "message": "Site not found"
         }), 404
 
+@site_endpoint.route("/v1/sites")
+@jwt_required()
+def get_sites():
+    sites_schema = SiteSchema(many=True)
+    current_user = User.find_by_email(get_jwt_identity())
+    sites = Site.query.filter(Site.members.any(id=current_user.id)).all()
+    if sites:
+        return jsonify(sites_schema.dump(sites))
+    else:
+        return jsonify({
+            "error": "Not found",
+            "message": "You are not a member of any sites"
+        }), 404
+
 @site_endpoint.route("/v1/sites/<id>/folders")
 @jwt_required()
 def get_folders_in_site(id):
