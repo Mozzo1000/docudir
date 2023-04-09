@@ -141,28 +141,17 @@ def add_site():
             "message": "Could not generate a unique ID, try again later."
         }), 500
 
+@site_endpoint.route("/v1/sites/<site_id>/files", methods=["POST"])
 @site_endpoint.route("/v1/sites/<site_id>/folders/<folder_id>/files", methods=["POST"])
 @jwt_required()
-def add_file_to_folder(site_id, folder_id):
-    return upload_file_helper(request.files, site_id, folder_id)
-
-@site_endpoint.route("/v1/sites/<id>/files", methods=["POST"])
-@jwt_required()
-def add_file(id):
-    return upload_file_helper(request.files, id)
-    
-def upload_file_helper(req_files, site_id, folder_id=None):
-    #req_files = flask request.files - required
-    #site_id - required
-    #folder_id - optional
-
-    if "file" not in req_files:
+def add_file(site_id, folder_id=None):
+    if "file" not in request.files:
         return jsonify({
             "error": "Bad request",
             "message": "file not given"
         }), 400
 
-    file = req_files["file"]
+    file = request.files["file"]
     if file.filename == "":
         return jsonify({
             "error": "Bad request",
