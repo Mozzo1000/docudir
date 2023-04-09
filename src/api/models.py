@@ -13,6 +13,24 @@ user_sites = db.Table("user_sites",
                         db.Column("site_id", UUID(as_uuid=True), db.ForeignKey("sites.id")),
                         db.Column("permission", db.String, default="owner"))
 
+class File(db.Model):
+    __tablename__ = "files"
+    id = db.Column(db.String, primary_key=True, default=shortuuid.uuid)
+    name = db.Column(db.String, nullable=False)
+    ext = db.Column(db.String)
+    mimetype = db.Column(db.String)
+    size = db.Column(db.Integer)
+    site_id = db.Column(UUID(as_uuid=True), db.ForeignKey("sites.id"), nullable=False)
+    folder_id = db.Column(db.String, db.ForeignKey("folders.id"), nullable=True)
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+class FileSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = File
+        
 class Folder(db.Model):
     __tablename__ = "folders"
     id = db.Column(db.String, primary_key=True, default=shortuuid.uuid)
