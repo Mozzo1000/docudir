@@ -5,15 +5,16 @@ from api.models import Folder, FolderSchema, User, Site, SiteSchema, File, FileS
 from werkzeug.utils import secure_filename
 import os
 import pathlib
+from api.decorators import check_site_permissions
 
 site_endpoint = Blueprint('site', __name__)
 
 @site_endpoint.route("/v1/sites/<id>")
 @jwt_required()
+@check_site_permissions("id")
 def get_site(id):
     sites_schema = SiteSchema()
-    current_user = User.find_by_email(get_jwt_identity())
-    site = Site.query.filter(Site.id==id, Site.members.any(id=current_user.id)).first()
+    site = Site.query.filter(Site.id==id).first()
     if site:
         return jsonify(sites_schema.dump(site))
     else:
@@ -38,88 +39,68 @@ def get_sites():
 
 @site_endpoint.route("/v1/sites/<id>/folders")
 @jwt_required()
+@check_site_permissions("id")
 def get_folders_in_site(id):
     folders_schema = FolderSchema()
-    current_user = User.find_by_email(get_jwt_identity())
-    allowed_site = Site.query.filter(Site.id==id, Site.members.any(id=current_user.id)).first() is not None
-    if allowed_site:
-        folders = Folder.query.filter(Folder.site_id==id).first()
+    folders = Folder.query.filter(Folder.site_id==id).first()
+    if folders:
         return jsonify(folders_schema.dump(folders))
     else:
         return jsonify({
-            "error": "Unauthorized access",
-            "message": "You do not have access to this site"
-        }), 401
+            "error": "Not found",
+            "message": "No folders in site"
+        }), 404
+
 
 @site_endpoint.route("/v1/sites/<site_id>/folders/<folder_id>")
 @jwt_required()
+@check_site_permissions("site_id")
 def get_folder_by_id(site_id, folder_id):
     folders_schema = FolderSchema()
-    current_user = User.find_by_email(get_jwt_identity())
-    allowed_site = Site.query.filter(Site.id==site_id, Site.members.any(id=current_user.id)).first() is not None
-    if allowed_site:
-        folders = Folder.query.filter(Folder.id==folder_id, Folder.site_id==site_id).first()
-        if folders:
-            return jsonify(folders_schema.dump(folders))
-        else:
-            return jsonify({
-                "error": "Not found",
-                "message": "Folder not found"
-            }), 404
+    folders = Folder.query.filter(Folder.id==folder_id, Folder.site_id==site_id).first()
+    if folders:
+        return jsonify(folders_schema.dump(folders))
     else:
         return jsonify({
-            "error": "Unauthorized access",
-            "message": "You do not have access to this site"
-        }), 401
+            "error": "Not found",
+            "message": "Folder not found"
+        }), 404
 
 @site_endpoint.route("/v1/sites/<site_id>/files/<file_id>")
 @site_endpoint.route("/v1/sites/<site_id>/folders/<folder_id>/files/<file_id>")
 @site_endpoint.route("/v1/sites/<site_id>/files/<file_id>.<ext>")
 @site_endpoint.route("/v1/sites/<site_id>/folders/<folder_id>/files/<file_id>.<ext>")
 @jwt_required()
+@check_site_permissions("site_id")
 def get_file(site_id, file_id, folder_id=None, ext=None):
     file_schema = FileSchema()
-    current_user = User.find_by_email(get_jwt_identity())
-    allowed_site = Site.query.filter(Site.id==site_id, Site.members.any(id=current_user.id)).first() is not None
-    if allowed_site:
-        files = File.query.filter(File.id==file_id, File.site_id==site_id, File.folder_id==folder_id).first()
-        if files:
-            if ext == files.ext.replace(".", ""):
-                return send_from_directory(os.path.join(os.getcwd(), current_app.config["DATA_FOLDER"], site_id), str(files.id + files.ext))
-            else:
-                return jsonify(file_schema.dump(files))
+    files = File.query.filter(File.id==file_id, File.site_id==site_id, File.folder_id==folder_id).first()
+    if files:
+        if ext == files.ext.replace(".", ""):
+            return send_from_directory(os.path.join(os.getcwd(), current_app.config["DATA_FOLDER"], site_id), str(files.id + files.ext))
         else:
-            return jsonify({
-                "error": "Not found",
-                "message": "File not found"
-            }), 404
+            return jsonify(file_schema.dump(files))
     else:
         return jsonify({
-            "error": "Unauthorized access",
-            "message": "You do not have access to this site"
-        }), 401
+            "error": "Not found",
+            "message": "File not found"
+        }), 404
 
 @site_endpoint.route("/v1/sites/<site_id>/files")
 @site_endpoint.route("/v1/sites/<site_id>/folders/<folder_id>/files")
 @jwt_required()
+@check_site_permissions("site_id")
 def get_files_(site_id, folder_id=None):
     file_schema = FileSchema(many=True)
-    current_user = User.find_by_email(get_jwt_identity())
-    allowed_site = Site.query.filter(Site.id==site_id, Site.members.any(id=current_user.id)).first() is not None
-    if allowed_site:
-        files = File.query.filter(File.site_id==site_id, File.folder_id==folder_id).all()
-        if files:
-            return jsonify(file_schema.dump(files))
-        else:
-            return jsonify({
-                "error": "Not found",
-                "message": "No files in site"
-            }), 404
+    files = File.query.filter(File.site_id==site_id, File.folder_id==folder_id).all()
+    if files:
+        return jsonify(file_schema.dump(files))
     else:
         return jsonify({
-            "error": "Unauthorized access",
-            "message": "You do not have access to this site"
-        }), 401
+            "error": "Not found",
+            "message": "No files in site"
+        }), 404
+
 
 @site_endpoint.route("/v1/sites", methods=["POST"])
 @jwt_required()
