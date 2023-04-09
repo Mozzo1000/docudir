@@ -85,10 +85,6 @@ def get_file(site_id, file_id, folder_id=None, ext=None):
         files = File.query.filter(File.id==file_id, File.site_id==site_id, File.folder_id==folder_id).first()
         if files:
             if ext == files.ext.replace(".", ""):
-                print("EXT FOUND!")
-                print(ext)
-                print(os.path.join(current_app.config["DATA_FOLDER"], site_id))
-                print(str(files.id + files.ext))
                 return send_from_directory(os.path.join(os.getcwd(), current_app.config["DATA_FOLDER"], site_id), str(files.id + files.ext))
             else:
                 return jsonify(file_schema.dump(files))
