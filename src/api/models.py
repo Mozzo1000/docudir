@@ -40,6 +40,9 @@ class Folder(db.Model):
     site_id = db.Column(UUID(as_uuid=True), db.ForeignKey("sites.id"), nullable=False)
     files = db.relationship("File")
     
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
 
 class FolderSchema(ma.SQLAlchemyAutoSchema):
     children = ma.Nested('FolderSchema', many=True)

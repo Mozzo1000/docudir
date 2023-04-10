@@ -101,6 +101,31 @@ def get_files_(site_id, folder_id=None):
             "message": "No files in site"
         }), 404
 
+@site_endpoint.route("/v1/sites/<site_id>/folders", methods=["POST"])
+@site_endpoint.route("/v1/sites/<site_id>/folders/<folder_id>", methods=["POST"])
+@jwt_required()
+@check_site_permissions("site_id")
+def add_folder(site_id, folder_id=None):
+    if not "name" in request.json:
+        return jsonify({
+            "error": "Bad request",
+            "message": "name not given"
+        }), 400
+    
+    try:
+        new_folder = Folder(name=request.json["name"], site_id=site_id, parent_id=folder_id)
+        new_folder.save_to_db()
+        return {
+            "message": "New folder created",
+            "id": new_folder.id,
+            "name": new_folder.name
+        }, 201
+    except:
+        return jsonify({
+            "error": "Unknown error",
+            "message": "Unkown error occurred"
+        }), 500
+    
 
 @site_endpoint.route("/v1/sites", methods=["POST"])
 @jwt_required()
