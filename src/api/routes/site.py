@@ -41,8 +41,8 @@ def get_sites():
 @jwt_required()
 @check_site_permissions("id")
 def get_folders_in_site(id):
-    folders_schema = FolderSchema()
-    folders = Folder.query.filter(Folder.site_id==id).first()
+    folders_schema = FolderSchema(many=True)
+    folders = Folder.query.filter(Folder.site_id==id, Folder.parent_id==None).all()
     if folders:
         return jsonify(folders_schema.dump(folders))
     else:
