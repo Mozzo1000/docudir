@@ -67,6 +67,37 @@ def get_folder_by_id(site_id, folder_id):
             "message": "Folder not found"
         }), 404
 
+@site_endpoint.route("/v1/sites/<site_id>/files/<file_id>", methods=["PATCH"])
+@site_endpoint.route("/v1/sites/<site_id>/folders/<folder_id>/files/<file_id>", methods=["PATCH"])
+@jwt_required()
+@check_site_permissions("site_id")
+def edit_file(site_id, file_id, folder_id=None):
+    file_schema = FileSchema()
+    files = File.query.filter(File.id==file_id, File.site_id==site_id, File.folder_id==folder_id, File.deleted==False).first()
+    if files:
+        if request.json:
+            if "name" in request.json:
+                ext = pathlib.Path(request.json["name"]).suffix
+                if ext:
+                    if ext != files.ext:
+                        os.rename(os.path.join(current_app.config["DATA_FOLDER"], site_id, str(files.id + files.ext)),
+                                os.path.join(current_app.config["DATA_FOLDER"], site_id, str(files.id + ext)))
+                        files.ext = ext
+                    files.name = request.json["name"]
+                else:
+                    files.name = request.json["name"] + files.ext
+            files.save_to_db()
+            return jsonify({"message": "File updated"}), 200
+        else:
+            return jsonify({
+                "error": "Bad request",
+                "message": "name not given"
+            }), 400
+    else:
+        return jsonify({
+            "error": "Not found",
+            "message": "File not found"
+        }), 404
 @site_endpoint.route("/v1/sites/<site_id>/files/<file_id>", methods=["DELETE"])
 @site_endpoint.route("/v1/sites/<site_id>/folders/<folder_id>/files/<file_id>", methods=["DELETE"])
 @jwt_required()
