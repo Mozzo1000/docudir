@@ -14,6 +14,18 @@ site_endpoint = Blueprint('site', __name__)
 @jwt_required()
 @check_site_permissions("id")
 def get_site(id):
+    """Retrieve information about a specific site
+    ---
+    parameters:
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: The ID of a site
+    responses:
+      200:
+        description: Information about a site
+    """
     sites_schema = SiteSchema()
     site = Site.query.filter(Site.id==id).first()
     if site:
