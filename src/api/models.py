@@ -22,6 +22,7 @@ class File(db.Model):
     size = db.Column(db.Integer)
     site_id = db.Column(UUID(as_uuid=True), db.ForeignKey("sites.id"), nullable=False)
     folder_id = db.Column(db.String, db.ForeignKey("folders.id"), nullable=True)
+    deleted = db.Column(db.Boolean, default=False)
 
     def save_to_db(self):
         db.session.add(self)
@@ -30,6 +31,7 @@ class File(db.Model):
 class FileSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = File
+        exclude = ["deleted"]
         
 class Folder(db.Model):
     __tablename__ = "folders"

@@ -5,6 +5,7 @@ from api.models import Folder, FolderSchema, User, Site, SiteSchema, File, FileS
 from werkzeug.utils import secure_filename
 import os
 import pathlib
+import shutil
 from api.decorators import check_site_permissions
 
 site_endpoint = Blueprint('site', __name__)
@@ -66,6 +67,36 @@ def get_folder_by_id(site_id, folder_id):
             "message": "Folder not found"
         }), 404
 
+@site_endpoint.route("/v1/sites/<site_id>/files/<file_id>", methods=["DELETE"])
+@site_endpoint.route("/v1/sites/<site_id>/folders/<folder_id>/files/<file_id>", methods=["DELETE"])
+@jwt_required()
+@check_site_permissions("site_id")
+def remove_file(site_id, file_id, folder_id=None):
+    file_schema = FileSchema()
+    files = File.query.filter(File.id==file_id, File.site_id==site_id, File.folder_id==folder_id, File.deleted==False).first()
+    if files:
+        try:
+            files.deleted = True
+            files.save_to_db()
+
+            trash_path = os.path.join(current_app.config["DATA_FOLDER"], site_id, ".trash")
+            if not os.path.exists(trash_path):
+                os.makedirs(trash_path)
+            
+            shutil.move(os.path.join(current_app.config["DATA_FOLDER"], site_id, str(files.id + files.ext)), trash_path)
+
+            return jsonify({"message": "File deleted"})
+        except:
+            return jsonify({
+                "error": "Unknown error",
+                "message": "Unkown error occurred"
+            }), 500
+    else:
+        return jsonify({
+            "error": "Not found",
+            "message": "File not found"
+        }), 404
+
 @site_endpoint.route("/v1/sites/<site_id>/files/<file_id>")
 @site_endpoint.route("/v1/sites/<site_id>/folders/<folder_id>/files/<file_id>")
 @site_endpoint.route("/v1/sites/<site_id>/files/<file_id>.<ext>")
@@ -74,7 +105,7 @@ def get_folder_by_id(site_id, folder_id):
 @check_site_permissions("site_id")
 def get_file(site_id, file_id, folder_id=None, ext=None):
     file_schema = FileSchema()
-    files = File.query.filter(File.id==file_id, File.site_id==site_id, File.folder_id==folder_id).first()
+    files = File.query.filter(File.id==file_id, File.site_id==site_id, File.folder_id==folder_id, File.deleted==False).first()
     if files:
         if ext == files.ext.replace(".", ""):
             return send_from_directory(os.path.join(os.getcwd(), current_app.config["DATA_FOLDER"], site_id), str(files.id + files.ext))
@@ -92,7 +123,7 @@ def get_file(site_id, file_id, folder_id=None, ext=None):
 @check_site_permissions("site_id")
 def get_files_(site_id, folder_id=None):
     file_schema = FileSchema(many=True)
-    files = File.query.filter(File.site_id==site_id, File.folder_id==folder_id).all()
+    files = File.query.filter(File.site_id==site_id, File.folder_id==folder_id, File.deleted==False).all()
     if files:
         return jsonify(file_schema.dump(files))
     else:
